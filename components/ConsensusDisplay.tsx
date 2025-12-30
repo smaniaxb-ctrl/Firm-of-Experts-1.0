@@ -9,6 +9,7 @@ import rehypeKatex from 'rehype-katex';
 const Mermaid: React.FC<{ chart: string }> = ({ chart }) => {
   const ref = useRef<HTMLDivElement>(null);
   const [isMermaidReady, setIsMermaidReady] = useState(false);
+  const [renderError, setRenderError] = useState<boolean>(false);
 
   useEffect(() => {
     // Poll for mermaid availability in case script is still loading
@@ -26,31 +27,24 @@ const Mermaid: React.FC<{ chart: string }> = ({ chart }) => {
     if (!isMermaidReady) return;
 
     let mounted = true;
+    setRenderError(false);
+
     const renderMermaid = async () => {
       const win = window as any;
       if (ref.current && win.mermaid) {
         try {
           // Clear previous content/attributes that mermaid adds
           ref.current.removeAttribute('data-processed');
-          ref.current.innerHTML = chart;
+          // Use textContent to ensure raw characters are passed correctly
+          ref.current.textContent = chart;
           
           await win.mermaid.run({
             nodes: [ref.current]
           });
         } catch (e) {
-          // If syntax is invalid (e.g. incomplete streaming), it throws.
-          if (mounted && ref.current) {
-             // Instead of showing a red error immediately, show a loading state
-             // because streaming markdown often leaves mermaid blocks incomplete temporarily.
-             ref.current.innerHTML = `
-                <div class="flex items-center justify-center gap-2 p-4 bg-brand-900/10 border border-brand-500/20 rounded-xl">
-                   <div class="w-2 h-2 bg-brand-400 rounded-full animate-pulse"></div>
-                   <div class="w-2 h-2 bg-brand-400 rounded-full animate-pulse delay-75"></div>
-                   <div class="w-2 h-2 bg-brand-400 rounded-full animate-pulse delay-150"></div>
-                   <span class="text-xs font-mono text-brand-400 uppercase tracking-widest ml-2">Visualizing Architecture...</span>
-                </div>
-                <pre class="hidden">${chart}</pre>
-             `;
+          console.warn("Mermaid rendering failed (possibly incomplete stream):", e);
+          if (mounted) {
+             setRenderError(true);
           }
         }
       }
@@ -62,6 +56,16 @@ const Mermaid: React.FC<{ chart: string }> = ({ chart }) => {
       mounted = false;
     };
   }, [chart, isMermaidReady]);
+
+  if (renderError) {
+      // Fallback: Display raw code if rendering fails (prevents stuck loading state)
+      return (
+          <div className="my-6 p-4 bg-slate-900 border border-red-500/30 rounded-xl overflow-x-auto">
+              <p className="text-[10px] text-red-400 font-bold uppercase mb-2">Diagram Visualization Failed</p>
+              <pre className="text-xs font-mono text-slate-400 whitespace-pre">{chart}</pre>
+          </div>
+      );
+  }
 
   return (
     <div className="my-6 overflow-hidden">

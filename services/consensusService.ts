@@ -84,6 +84,7 @@ const TECHNICAL_ENGINE: ExpertProfile = {
   2.  Focus on structural efficiency, security, and scalability.
   3.  If architecture is needed, GENERATE MERMAID.JS DIAGRAMS.
   4.  Wrap mermaid code in \`\`\`mermaid blocks.
+  5.  **MERMAID RULE**: ALWAYS quote node labels that contain spaces or special characters. Ex: A["Client Node"] --> B["Server Node"]. Do not use A[Client Node] without quotes.
   
   VISUALIZATION STANDARDS (High Contrast Dark Mode):
   classDef user fill:#1e293b,stroke:#a855f7,color:#ffffff,stroke-width:2px;
