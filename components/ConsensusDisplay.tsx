@@ -111,6 +111,10 @@ export const ConsensusDisplay: React.FC<Props> = ({ content, isThinking, criticC
   }, []);
 
   const handleDownload = () => {
+    // We split the closing script tag to prevent the browser parser from terminating the script block early
+    // when this code is bundled into index.html
+    const closingScript = '<' + '/script>'; 
+    
     const htmlTemplate = `
       <!DOCTYPE html>
       <html lang="en">
@@ -118,8 +122,8 @@ export const ConsensusDisplay: React.FC<Props> = ({ content, isThinking, criticC
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Firm of Experts Consensus Verdict</title>
-        <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
-        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+        <script src="https://cdn.tailwindcss.com?plugins=typography">${closingScript}
+        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js">${closingScript}
         <script type="module">
           import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
           mermaid.initialize({ 
@@ -139,7 +143,7 @@ export const ConsensusDisplay: React.FC<Props> = ({ content, isThinking, criticC
             fontFamily: 'ui-sans-serif, system-ui, sans-serif'
           });
           window.mermaid = mermaid;
-        </script>
+        ${closingScript}
         <style>
           body { background-color: #0f172a; color: #e2e8f0; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
           .container { max-width: 800px; margin: 0 auto; padding: 2rem; }
@@ -196,7 +200,7 @@ export const ConsensusDisplay: React.FC<Props> = ({ content, isThinking, criticC
               });
             }
           }, 500);
-        </script>
+        ${closingScript}
       </body>
       </html>
     `;
