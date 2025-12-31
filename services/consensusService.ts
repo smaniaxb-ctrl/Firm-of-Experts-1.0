@@ -82,11 +82,17 @@ const TECHNICAL_ENGINE: ExpertProfile = {
   RULES:
   1.  Adhere strictly to documentation and syntax rules (e.g., Python PEP8, React Hooks rules).
   2.  Focus on structural efficiency, security, and scalability.
-  3.  If architecture is needed, GENERATE MERMAID.JS DIAGRAMS.
-  4.  Wrap mermaid code in \`\`\`mermaid blocks.
-  5.  **MERMAID RULE**: ALWAYS quote node labels that contain spaces or special characters. Ex: A["Client Node"] --> B["Server Node"]. Do not use A[Client Node] without quotes.
+  3.  **CONSTRAINT ADHERENCE**: If the user explicitly states "Do not use X" or "I cannot use Version Y", you MUST respect this. Do NOT recommend defaults if the user has excluded them.
+  4.  If architecture is needed, GENERATE MERMAID.JS DIAGRAMS.
+  5.  Wrap mermaid code in \`\`\`mermaid blocks.
   
-  VISUALIZATION STANDARDS (High Contrast Dark Mode):
+  **MERMAID VISUALIZATION STRICT RULES**:
+  - **QUOTE EVERYTHING**: You MUST use quotes for ALL node labels and edge labels.
+  - **CORRECT**: A["Start Node"] -->| "Action" | B{"Decision?"}
+  - **INCORRECT**: A[Start Node] -->| Action | B{Decision?} (Spaces inside brackets crash the renderer)
+  - **INCORRECT**: A[Start] (Even single words should be quoted for safety: A["Start"])
+  
+  VISUALIZATION STYLE (High Contrast Dark Mode):
   classDef user fill:#1e293b,stroke:#a855f7,color:#ffffff,stroke-width:2px;
   classDef component fill:#0f172a,stroke:#38bdf8,color:#ffffff,stroke-width:2px;
   classDef plain fill:#0f172a,stroke:#94a3b8,color:#ffffff,stroke-width:1px;
@@ -112,8 +118,9 @@ const RED_TEAM_CRITIC: ExpertProfile = {
   
   RULES:
   1.  You do NOT generate ideas. You stress-test them.
-  2.  Look for: Hallucinations, Security Risks, Logical Fallacies, Bias.
-  3.  Be brief, blunt, and critical.`,
+  2.  **CONSTRAINT CHECK**: Did the user specify constraints (e.g., "Unable to use version 1.5", "Must use Python")? If the output violates these constraints, YOU MUST FLAG IT as a major error.
+  3.  Look for: Hallucinations, Security Risks, Logical Fallacies, Bias.
+  4.  Be brief, blunt, and critical.`,
   model: 'gemini-3-pro-preview',
   type: 'critic'
 };
@@ -336,7 +343,7 @@ export const runWorkerModels = async (
               Review the output below for:
               1. Syntax errors (Code/Mermaid).
               2. Logical fallacies.
-              3. Deviation from strict constraints.
+              3. Deviation from strict constraints (e.g., User said "No X").
               
               If perfect, reply: PASS
               If errors, list them concisely.
@@ -428,13 +435,14 @@ export const streamJudgeConsensus = async (
     INPUT: You have received outputs from specialized engines (Analytical, Creative, Technical, etc.).
     
     SYNTHESIS RULES:
-    1. **NO META-TALK**: Do NOT start with "I am Firm of Experts". Do NOT narrate the routing process (e.g., "My router selected..."). Just answer the user's question directly.
+    1. **NO META-TALK**: Do NOT start with "I am Firm of Experts". Do NOT narrate the routing process. Just answer the user's question directly.
     2. **PRIORITIZATION**:
        - Code/Technical -> Prioritize **Technical Engine**.
        - Logic/Math -> Prioritize **Analytical Engine**.
        - Ideas/Brainstorming -> Prioritize **Creative Engine**.
-    3. **CONFLICT RESOLUTION**: Resolve discrepancies to form a single cohesive voice. Only mention specific experts (e.g., "The Analyst notes...") if there is a meaningful disagreement that provides necessary nuance.
+    3. **CONFLICT RESOLUTION**: Resolve discrepancies to form a single cohesive voice.
     4. **VISUALS**: Always include Mermaid diagrams if the Technical Engine provided them.
+    5. **CONSTRAINT CHECK**: If the user explicitly explicitly forbade a technology/version (e.g., "Unable to use below version 2.5"), ensure the final answer RESPECTS this. Do not repeat recommendations that violate user constraints.
     
     FORMAT:
     **Confidence: [High/Med/Low]**
@@ -489,6 +497,7 @@ export const runCriticReview = async (
         1. Does the synthesis hallucinate facts?
         2. Are there security vulnerabilities (in code)?
         3. Is the logic sound?
+        4. **CONSTRAINT CHECK**: Did the user list specific constraints (e.g., "No Gemini 1.5", "Only Python")? Did the output violate them?
         
         If perfect, say "No issues found."
     `;
